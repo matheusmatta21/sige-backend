@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model dim_genres {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  fact_game_sales fact_game_sales[]
+}
+
+model dim_platforms {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  fact_game_sales fact_game_sales[]
+}
+
+model dim_publishers {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  fact_game_sales fact_game_sales[]
+}
+
+model dim_ratings {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  fact_game_sales fact_game_sales[]
+}
+
+model fact_game_sales {
+  id              Int             @id @default(autoincrement())
+  name            String          @db.VarChar(500)
+  year_of_release Int?
+  platform_id     Int?
+  genre_id        Int?
+  publisher_id    Int?
+  rating_id       Int?
+  na_sales        Decimal?        @default(0.0) @db.Decimal(10, 2)
+  eu_sales        Decimal?        @default(0.0) @db.Decimal(10, 2)
+  jp_sales        Decimal?        @default(0.0) @db.Decimal(10, 2)
+  other_sales     Decimal?        @default(0.0) @db.Decimal(10, 2)
+  global_sales    Decimal?        @default(0.0) @db.Decimal(10, 2)
+  critic_score    Float?          @db.Real
+  critic_count    Int?
+  user_score      Float?          @db.Real
+  user_count      Int?
+  dim_genres      dim_genres?     @relation(fields: [genre_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_platforms   dim_platforms?  @relation(fields: [platform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_publishers  dim_publishers? @relation(fields: [publisher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dim_ratings     dim_ratings?    @relation(fields: [rating_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
