@@ -1,93 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { GetGamesDTO } from './dto/get-games.dto.js';
+import { GameFromDb } from './types/game-from-db.js';
 
-type DimensionTable =
-  'dim_genres' | 'dim_platforms' | 'dim_publishers' | 'dim_ratings';
-
+const GAME_SELECT = {
+  name: true,
+  year_of_release: true,
+  dim_platforms: { select: { name: true } },
+  dim_genres: { select: { name: true } },
+  dim_publishers: { select: { name: true } },
+  dim_ratings: { select: { name: true } },
+  na_sales: true,
+  eu_sales: true,
+  jp_sales: true,
+  other_sales: true,
+  global_sales: true,
+  critic_score: true,
+  critic_count: true,
+  user_score: true,
+  user_count: true,
+};
 @Injectable()
 export class GamesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAll(): Promise<GetGamesDTO[]> {
-    const games = await this.prisma.fact_game_sales.findMany({ });
-    const formatted_games = [];
-
-    for (const element of games) {
-      const number_array_ids = [
-        element.platform_id,
-        element.genre_id,
-        element.rating_id,
-        element.publisher_id,
-      ];
-      const order_tables: DimensionTable[] = [
-        'dim_platforms',
-        'dim_genres',
-        'dim_ratings',
-        'dim_publishers',
-      ];
-      const name_array: (string | null)[] = [];
-
-      for (let i = 0; i < number_array_ids.length; i++) {
-        name_array.push(
-          await this.getNameById(number_array_ids[i], order_tables[i]),
-        );
-      }
-
-      const [platformName, genreName, ratingName, publisherName] = name_array;
-
-      formatted_games.push({
-        name: element.name,
-        year_of_release: element.year_of_release,
-        platform_name: platformName,
-        genre_name: genreName,
-        publisher_name: publisherName,
-        rating: ratingName,
-        na_sales: Number(element.na_sales ?? 0),
-        eu_sales: Number(element.eu_sales ?? 0),
-        jp_sales: Number(element.jp_sales ?? 0),
-        other_sales: Number(element.other_sales ?? 0),
-        global_sales: Number(element.global_sales ?? 0),
-        critic_score: element.critic_score,
-        critic_count: element.critic_count,
-        user_score: element.user_score,
-        user_count: element.user_count,
-      });
+  private formatGame(game: GameFromDb) : GetGamesDTO {
+    const newGame = {
+        name: game.name,
+        year_of_release: game.year_of_release,
+        platform_name: game.dim_platforms?.name ?? null,
+        genre_name: game.dim_genres?.name ?? null,
+        publisher_name: game.dim_publishers?.name ?? null,
+        rating: game.dim_ratings?.name ?? null,
+        na_sales: Number(game.na_sales ?? 0),
+        eu_sales: Number(game.eu_sales ?? 0),
+        jp_sales: Number(game.jp_sales ?? 0),
+        other_sales: Number(game.other_sales ?? 0),
+        global_sales: Number(game.global_sales ?? 0),
+        critic_score: game.critic_score,
+        critic_count: game.critic_count,
+        user_score: game.user_score,
+        user_count: game.user_count,
+      };
+      return newGame;
     }
 
-    return formatted_games;
+  async getAll(): Promise<GetGamesDTO[]> {
+    const games = await this.prisma.fact_game_sales.findMany({
+      select: GAME_SELECT
+    });
+    return games.map((game) => this.formatGame(game))
   }
 
-  async getNameById(id: number | null, table: DimensionTable) {
-    if (id === null) return null;
+  async getById(id: number): Promise<GetGamesDTO> {
+    const game = await this.prisma.fact_game_sales.findUnique({
+      select: GAME_SELECT,
+      where: { id },
+    });
+    if (!game) {
+        throw new NotFoundException(`Jogo com id ${id} não encontrado`);
+      }
 
-    let result: { name: string } | null;
-    switch (table) {
-      case 'dim_genres':
-        result = await this.prisma.dim_genres.findUnique({
-          select: { name: true },
-          where: { id },
-        });
-        break;
-      case 'dim_platforms':
-        result = await this.prisma.dim_platforms.findUnique({
-          select: { name: true },
-          where: { id },
-        });
-        break;
-      case 'dim_publishers':
-        result = await this.prisma.dim_publishers.findUnique({
-          select: { name: true },
-          where: { id },
-        });
-        break;
-      case 'dim_ratings':
-        result = await this.prisma.dim_ratings.findUnique({
-          select: { name: true },
-          where: { id },
-        });
-        break;
-    }
-    return result?.name ?? null;
+    return this.formatGame(game);
   }
 }
