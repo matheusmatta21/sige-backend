@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { GetPlatformsDTO } from './dto/get-platforms.dto.js';
 
@@ -13,12 +13,17 @@ export class PlatformsService {
       },
     });
   }
-  async getById(id: number) {
-    return this.prisma.dim_platforms.findUnique({
+  async getById(id: number): Promise<GetPlatformsDTO> {
+    const platform = await this.prisma.dim_platforms.findUnique({
       select: {
         name: true,
       },
       where: { id },
     });
+    if (!platform) {
+      throw new NotFoundException(`Plataforma com id ${id} não encontrada`);
+    }
+
+    return platform;
   }
 }

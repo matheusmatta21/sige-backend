@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -9,6 +10,7 @@ describe('GenresService', () => {
   const mockPrismaService = {
     dim_genres: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
     },
   };
 
@@ -39,5 +41,24 @@ describe('GenresService', () => {
     expect(mockPrismaService.dim_genres.findMany).toHaveBeenCalledWith({
       select: { name: true },
     });
+  });
+
+  it('should return a genre on getById', async () => {
+    const expected = { name: 'Action' };
+    mockPrismaService.dim_genres.findUnique.mockResolvedValue(expected);
+
+    const result = await service.getById(1);
+
+    expect(result).toEqual(expected);
+    expect(mockPrismaService.dim_genres.findUnique).toHaveBeenCalledWith({
+      select: { name: true },
+      where: { id: 1 },
+    });
+  });
+
+  it('should throw NotFoundException when genre does not exist', async () => {
+    mockPrismaService.dim_genres.findUnique.mockResolvedValue(null);
+
+    await expect(service.getById(999999)).rejects.toThrow(NotFoundException);
   });
 });
