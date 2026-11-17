@@ -1,4 +1,16 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { OverviewService } from './overview.service.js';
 
-@Controller('overview')
-export class OverviewController {}
+@Controller('')
+export class OverviewController {
+    constructor(private readonly overviewService: OverviewService){}
+
+    @Get('global-sales')
+    getAllGlobalSales() {return this.overviewService.getAllGlobalSales()}
+
+    @Get('top-genres')
+    getTopGenreSales() {return this.overviewService.getTopGenreSales()}
+
+    @Get('average-score')
+    getAverageScores() {return this.overviewService.getAverageScores()}
+}
