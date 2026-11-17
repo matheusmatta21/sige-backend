@@ -8,7 +8,7 @@ export class OverviewController {
     constructor(private readonly overviewService: OverviewService){}
 
     @Get('global-sales')
-    getAllGlobalSales() {return this.overviewService.getAllGlobalSales()}
+    getTotalGlobalSales() {return this.overviewService.getTotalGlobalSales()}
 
     @Get('top-genres')
     getTopGenreSales() {return this.overviewService.getTopGenreSales()}

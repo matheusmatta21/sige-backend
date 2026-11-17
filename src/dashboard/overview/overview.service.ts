@@ -1,19 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { GetAverageScoresDTO } from './dto/get-average-scores.dto.js';
+import { getTopGenreSalesDTO } from './dto/get-top-genre-sales.dto.js';
+import { GetTotalGlobalSalesDTO } from './dto/get-total-global-sales.dto.js';
 
 @Injectable()
 export class OverviewService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllGlobalSales() {
+  async getTotalGlobalSales(): Promise<GetTotalGlobalSalesDTO> {
     const result = await this.prisma.fact_game_sales.aggregate({
       _sum: {
         global_sales: true,
       },
     });
-    return Number(result._sum.global_sales ?? 0);
+    return {
+      global_sales: Number(result._sum.global_sales ?? 0),
+    };
   }
-  async getTopGenreSales() {
+  async getTopGenreSales(): Promise<getTopGenreSalesDTO> {
     const games = await this.prisma.fact_game_sales.findMany({
       select: {
         global_sales: true,
@@ -50,10 +55,10 @@ export class OverviewService {
       }
       sales_array.push(genreObject);
     }
-    return sales_array.sort((a, b) => b.global_sales - a.global_sales);
+    return sales_array.sort((a, b) => b.global_sales - a.global_sales)[0];
   }
 
-  async getAverageScores() {
+  async getAverageScores(): Promise<GetAverageScoresDTO> {
     const result = await this.prisma.fact_game_sales.aggregate({
       _avg: {
         user_score: true,
