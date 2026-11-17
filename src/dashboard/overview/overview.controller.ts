@@ -1,6 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { OverviewService } from './overview.service.js';
 
+@ApiTags('Dashboard')
 @Controller('')
 export class OverviewController {
     constructor(private readonly overviewService: OverviewService){}
