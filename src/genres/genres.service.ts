@@ -12,4 +12,10 @@ export class GenresService {
       },
     });
   }
+  async getById(id: number) {
+    return this.prisma.dim_genres.findUnique({
+      select: { name: true },
+      where: { id },
+    });
+  }
 }
