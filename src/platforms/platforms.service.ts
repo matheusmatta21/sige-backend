@@ -13,4 +13,12 @@ export class PlatformsService {
       },
     });
   }
+  async getById(id: number) {
+    return this.prisma.dim_platforms.findUnique({
+      select: {
+        name: true,
+      },
+      where: { id },
+    });
+  }
 }

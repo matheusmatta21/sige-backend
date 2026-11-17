@@ -31,7 +31,7 @@ describe('PlatformsController', () => {
     const expected = [{ name: 'Wii' }, { name: 'PS4' }];
     mockPlatformsService.getAll.mockResolvedValue(expected);
 
-    const result = await controller.findAll();
+    const result = await controller.getAll();
 
     expect(result).toEqual(expected);
     expect(mockPlatformsService.getAll).toHaveBeenCalledTimes(1);
