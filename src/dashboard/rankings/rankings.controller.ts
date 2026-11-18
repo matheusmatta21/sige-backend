@@ -25,4 +25,11 @@ export class RankingsController {
   ) {
     return this.rankingsService.getSalesRanking(by, limit);
   }
+
+  @Get('publishers')
+  getPublishersAnalytics(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.rankingsService.getPublishersAnalytics(limit);
+  }
 }
