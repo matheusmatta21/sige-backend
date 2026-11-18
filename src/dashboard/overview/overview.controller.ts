@@ -1,8 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { OverviewService } from './overview.service.js';
 
-@ApiTags('Dashboard')
 @Controller('')
 export class OverviewController {
     constructor(private readonly overviewService: OverviewService){}
@@ -15,4 +13,10 @@ export class OverviewController {
 
     @Get('average-score')
     getAverageScores() {return this.overviewService.getAverageScores()}
+
+    @Get('units-by-region')
+    getSalesByRegion() {return this.overviewService.getSalesByRegion()}
+
+    @Get('top-5-platforms')
+    getTop5PlatformsBySales() {return this.overviewService.getTop5PlatformsByTotalSales()}
 }
