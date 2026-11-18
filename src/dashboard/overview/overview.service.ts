@@ -5,6 +5,7 @@ import { getTopGenreSalesDTO } from './dto/get-top-genre-sales.dto.js';
 import { GetTotalGlobalSalesDTO } from './dto/get-total-global-sales.dto.js';
 import { getSalesByRegionDTO } from './dto/get-sales-by-region.dto.js';
 import { GetTop5PlatformsBySalesDTO } from './dto/get-top-5-platforms-by-sales.dto.js';
+import { GetSalesByYearDTO } from './dto/get-sales-by-year.dto.js';
 
 @Injectable()
 export class OverviewService {
@@ -74,7 +75,28 @@ export class OverviewService {
     };
   }
 
-  //to-do: fazer funcao de vendas de jogos por ano de lançamento
+  async getSalesByYear(): Promise<GetSalesByYearDTO[]> {
+    const result = await this.prisma.fact_game_sales.groupBy({
+      by: 'year_of_release',
+      _sum: {
+        na_sales: true,
+        eu_sales: true,
+        jp_sales: true,
+        global_sales: true,
+        other_sales: true,
+      },
+      where: { year_of_release: { not: null } },
+      orderBy: { year_of_release: 'asc' },
+    });
+    return result.map((item) => ({
+      year_of_release: item.year_of_release as number,
+      na_sales: Number(item._sum.na_sales ?? 0),
+      eu_sales: Number(item._sum.eu_sales ?? 0),
+      jp_sales: Number(item._sum.jp_sales ?? 0),
+      other_sales: Number(item._sum.other_sales ?? 0),
+      global_sales: Number(item._sum.global_sales ?? 0),
+    }));
+  }
 
   async getSalesByRegion(): Promise<getSalesByRegionDTO> {
     const totalSales = await this.getTotalGlobalSales();

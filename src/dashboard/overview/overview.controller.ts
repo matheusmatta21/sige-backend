@@ -14,9 +14,12 @@ export class OverviewController {
     @Get('average-score')
     getAverageScores() {return this.overviewService.getAverageScores()}
 
-    @Get('units-by-region')
+    @Get('sales-by-region')
     getSalesByRegion() {return this.overviewService.getSalesByRegion()}
 
     @Get('top-5-platforms')
     getTop5PlatformsBySales() {return this.overviewService.getTop5PlatformsByTotalSales()}
+
+    @Get('sales-by-year')
+    getSalesByYear() {return this.overviewService.getSalesByYear()}
 }
