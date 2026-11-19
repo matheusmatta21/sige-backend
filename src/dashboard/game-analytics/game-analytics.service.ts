@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { platform } from 'os';
+import { GetGameDetailsDTO } from './dto/get-game-details.dto.js';
 
 @Injectable()
 export class GameAnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getGameDetails(id: number) {
+  async getGameDetails(id: number): Promise<GetGameDetailsDTO> {
     const gameInfo = await this.prisma.fact_game_sales.findUnique({
       where: { id },
       select: {
@@ -76,10 +76,10 @@ export class GameAnalyticsService {
     ).toFixed(2);
     return {
       name: gameInfo.name,
-      platform_name: gameInfo.dim_platforms?.name,
-      genre_name: gameInfo.dim_genres?.name,
-      publisher_name: gameInfo.dim_publishers?.name,
-      rating: gameInfo.dim_ratings?.name,
+      platform_name: gameInfo.dim_platforms?.name ?? null,
+      genre_name: gameInfo.dim_genres?.name ?? null,
+      publisher_name: gameInfo.dim_publishers?.name ?? null,
+      rating: gameInfo.dim_ratings?.name ?? null,
       year_of_release: gameInfo.year_of_release,
       critic_score: gameInfo.critic_score,
       critic_count: gameInfo.critic_count,
