@@ -1,6 +1,7 @@
 import { Prisma } from "../../generated/prisma/client.js";
 
 export type GameFromDb = {
+  id: number;
   name: string;
   year_of_release: number | null;
   dim_platforms: { name: string } | null;

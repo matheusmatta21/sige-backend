@@ -4,6 +4,7 @@ import { GetGamesDTO } from './dto/get-games.dto.js';
 import { GameFromDb } from './types/game-from-db.js';
 
 const GAME_SELECT = {
+  id: true,
   name: true,
   year_of_release: true,
   dim_platforms: { select: { name: true } },
@@ -26,6 +27,7 @@ export class GamesService {
 
   private formatGame(game: GameFromDb): GetGamesDTO {
     const newGame = {
+      id: game.id,
       name: game.name,
       year_of_release: game.year_of_release,
       platform_name: game.dim_platforms?.name ?? null,
