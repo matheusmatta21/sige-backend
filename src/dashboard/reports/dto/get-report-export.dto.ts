@@ -1,6 +1,7 @@
 import { GetGamesDTO } from '../../../games/dto/get-games.dto.js';
 
 export class GetReportExportDTO {
+  title: string;
   total_titles: number;
   global_sales: number;
   critic_average_score: number;
