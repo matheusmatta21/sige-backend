@@ -5,6 +5,7 @@ import { GenresModule } from './genres/genres.module.js';
 import { PlatformsModule } from './platforms/platforms.module.js';
 import { PublishersModule } from './publishers/publishers.module.js';
 import { DashboardModule } from './dashboard/dashboard.module.js';
+import { RatingsModule } from './ratings/ratings.module.js';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DashboardModule } from './dashboard/dashboard.module.js';
     PlatformsModule,
     PublishersModule,
     DashboardModule,
+    RatingsModule,
   ],
 
 })
