@@ -1,6 +1,10 @@
+export class GamePlatformChipDTO {
+  platform_name: string;
+}
+
 export class GetGameDetailsDTO {
   name: string;
-  platform_name: string | null;
+  platforms: GamePlatformChipDTO[];
   genre_name: string | null;
   publisher_name: string | null;
   rating: string | null;

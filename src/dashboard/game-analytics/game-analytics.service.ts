@@ -33,14 +33,27 @@ export class GameAnalyticsService {
       throw new NotFoundException(`Jogo com id ${id} não encontrado`);
     }
 
-    const selectedGenreAverages = await this.prisma.fact_game_sales.aggregate({
-      _avg: {
-        global_sales: true,
-        critic_score: true,
-        user_score: true,
-      },
-      where: { genre_id: gameInfo?.genre_id },
-    });
+    const [selectedGenreAverages, sameTitleGames] = await Promise.all([
+      this.prisma.fact_game_sales.aggregate({
+        _avg: {
+          global_sales: true,
+          critic_score: true,
+          user_score: true,
+        },
+        where: { genre_id: gameInfo.genre_id },
+      }),
+      this.prisma.fact_game_sales.findMany({
+        where: {
+          name: gameInfo.name,
+          platform_id: { not: null },
+        },
+        select: {
+          id: true,
+          dim_platforms: { select: { name: true } },
+        },
+        orderBy: { global_sales: 'desc' },
+      }),
+    ]);
 
     const naSalesPercentage = (
       (Number(gameInfo?.na_sales) / Number(gameInfo?.global_sales)) *
@@ -76,7 +89,11 @@ export class GameAnalyticsService {
     ).toFixed(2);
     return {
       name: gameInfo.name,
-      platform_name: gameInfo.dim_platforms?.name ?? null,
+      platforms: sameTitleGames.flatMap((item) =>
+        item.dim_platforms?.name
+          ? [{platform_name: item.dim_platforms.name }]
+          : [],
+      ),
       genre_name: gameInfo.dim_genres?.name ?? null,
       publisher_name: gameInfo.dim_publishers?.name ?? null,
       rating: gameInfo.dim_ratings?.name ?? null,
