@@ -6,27 +6,35 @@ import { GetTotalGlobalSalesDTO } from './dto/get-total-global-sales.dto.js';
 import { getSalesByRegionDTO } from './dto/get-sales-by-region.dto.js';
 import { GetTop5PlatformsBySalesDTO } from './dto/get-top-5-platforms-by-sales.dto.js';
 import { GetSalesByYearDTO } from './dto/get-sales-by-year.dto.js';
+import { DashboardFiltersDTO } from '../dto/dashboard-filters.dto.js';
+import { buildSalesWhere } from '../utils/build-sales-where.js';
 
 @Injectable()
 export class OverviewService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getTotalGlobalSales(): Promise<GetTotalGlobalSalesDTO> {
+  async getTotalGlobalSales(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<GetTotalGlobalSalesDTO> {
     const result = await this.prisma.fact_game_sales.aggregate({
       _sum: {
         global_sales: true,
       },
+      where: buildSalesWhere(filters),
     });
     return {
       global_sales: Number(result._sum.global_sales ?? 0),
     };
   }
-  async getTopGenreSales(): Promise<getTopGenreSalesDTO> {
+  async getTopGenreSales(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<getTopGenreSalesDTO> {
     const games = await this.prisma.fact_game_sales.findMany({
       select: {
         global_sales: true,
         dim_genres: { select: { name: true } },
       },
+      where: buildSalesWhere(filters),
     });
 
     const formatted_games = [];
@@ -58,15 +66,23 @@ export class OverviewService {
       }
       sales_array.push(genreObject);
     }
-    return sales_array.sort((a, b) => b.global_sales - a.global_sales)[0];
+    return (
+      sales_array.sort((a, b) => b.global_sales - a.global_sales)[0] ?? {
+        genre_name: '',
+        global_sales: 0,
+      }
+    );
   }
 
-  async getAverageScores(): Promise<GetAverageScoresDTO> {
+  async getAverageScores(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<GetAverageScoresDTO> {
     const result = await this.prisma.fact_game_sales.aggregate({
       _avg: {
         user_score: true,
         critic_score: true,
       },
+      where: buildSalesWhere(filters),
     });
 
     return {
@@ -75,7 +91,9 @@ export class OverviewService {
     };
   }
 
-  async getSalesByYear(): Promise<GetSalesByYearDTO[]> {
+  async getSalesByYear(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<GetSalesByYearDTO[]> {
     const result = await this.prisma.fact_game_sales.groupBy({
       by: 'year_of_release',
       _sum: {
@@ -85,7 +103,7 @@ export class OverviewService {
         global_sales: true,
         other_sales: true,
       },
-      where: { year_of_release: { not: null } },
+      where: buildSalesWhere(filters, { year_of_release: { not: null } }),
       orderBy: { year_of_release: 'asc' },
     });
     return result.map((item) => ({
@@ -98,8 +116,10 @@ export class OverviewService {
     }));
   }
 
-  async getSalesByRegion(): Promise<getSalesByRegionDTO> {
-    const totalSales = await this.getTotalGlobalSales();
+  async getSalesByRegion(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<getSalesByRegionDTO> {
+    const totalSales = await this.getTotalGlobalSales(filters);
     const sales = await this.prisma.fact_game_sales.aggregate({
       _sum: {
         na_sales: true,
@@ -107,23 +127,25 @@ export class OverviewService {
         jp_sales: true,
         other_sales: true,
       },
+      where: buildSalesWhere(filters),
     });
 
     const formattedSales = {
-      na_sales: Number(sales._sum.na_sales),
-      eu_sales: Number(sales._sum.eu_sales),
-      jp_sales: Number(sales._sum.jp_sales),
-      other_sales: Number(sales._sum.other_sales),
+      na_sales: Number(sales._sum.na_sales ?? 0),
+      eu_sales: Number(sales._sum.eu_sales ?? 0),
+      jp_sales: Number(sales._sum.jp_sales ?? 0),
+      other_sales: Number(sales._sum.other_sales ?? 0),
     };
 
-    const naPercentage =
-      (formattedSales.na_sales / totalSales.global_sales) * 100;
-    const euPercentage =
-      (formattedSales.eu_sales / totalSales.global_sales) * 100;
-    const jpPercentage =
-      (formattedSales.jp_sales / totalSales.global_sales) * 100;
-    const otherPercentage =
-      (formattedSales.other_sales / totalSales.global_sales) * 100;
+    const toPercentage = (regionSales: number) =>
+      totalSales.global_sales > 0
+        ? (regionSales / totalSales.global_sales) * 100
+        : 0;
+
+    const naPercentage = toPercentage(formattedSales.na_sales);
+    const euPercentage = toPercentage(formattedSales.eu_sales);
+    const jpPercentage = toPercentage(formattedSales.jp_sales);
+    const otherPercentage = toPercentage(formattedSales.other_sales);
 
     return {
       na: {
@@ -145,13 +167,15 @@ export class OverviewService {
     };
   }
 
-  async getTop5PlatformsByTotalSales(): Promise<GetTop5PlatformsBySalesDTO[]> {
+  async getTop5PlatformsByTotalSales(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<GetTop5PlatformsBySalesDTO[]> {
     const platformSalesIds = await this.prisma.fact_game_sales.groupBy({
       by: ['platform_id'],
       _sum: {
         global_sales: true,
       },
-      where: { platform_id: { not: null } },
+      where: buildSalesWhere(filters, { platform_id: { not: null } }),
     });
 
     const platforms = await this.prisma.dim_platforms.findMany({

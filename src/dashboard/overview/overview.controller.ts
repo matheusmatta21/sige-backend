@@ -1,25 +1,38 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { OverviewService } from './overview.service.js';
+import { DashboardFiltersDTO } from '../dto/dashboard-filters.dto.js';
 
 @Controller('')
 export class OverviewController {
-    constructor(private readonly overviewService: OverviewService){}
+  constructor(private readonly overviewService: OverviewService) {}
 
-    @Get('global-sales')
-    getTotalGlobalSales() {return this.overviewService.getTotalGlobalSales()}
+  @Get('global-sales')
+  getTotalGlobalSales(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getTotalGlobalSales(filters);
+  }
 
-    @Get('top-genres')
-    getTopGenreSales() {return this.overviewService.getTopGenreSales()}
+  @Get('top-genres')
+  getTopGenreSales(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getTopGenreSales(filters);
+  }
 
-    @Get('average-score')
-    getAverageScores() {return this.overviewService.getAverageScores()}
+  @Get('average-score')
+  getAverageScores(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getAverageScores(filters);
+  }
 
-    @Get('sales-by-region')
-    getSalesByRegion() {return this.overviewService.getSalesByRegion()}
+  @Get('sales-by-region')
+  getSalesByRegion(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getSalesByRegion(filters);
+  }
 
-    @Get('top-5-platforms')
-    getTop5PlatformsBySales() {return this.overviewService.getTop5PlatformsByTotalSales()}
+  @Get('top-5-platforms')
+  getTop5PlatformsBySales(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getTop5PlatformsByTotalSales(filters);
+  }
 
-    @Get('sales-by-year')
-    getSalesByYear() {return this.overviewService.getSalesByYear()}
+  @Get('sales-by-year')
+  getSalesByYear(@Query() filters: DashboardFiltersDTO) {
+    return this.overviewService.getSalesByYear(filters);
+  }
 }

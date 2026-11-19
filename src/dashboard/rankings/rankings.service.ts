@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { GetSalesRankingDTO } from './dto/get-sales-ranking.dto.js';
 import { GetPublishersAnalyticsDTO } from './dto/get-publishers-analytics.dto.js';
+import { DashboardFiltersDTO } from '../dto/dashboard-filters.dto.js';
+import { buildSalesWhere } from '../utils/build-sales-where.js';
 
 export enum RankingGroupBy {
   PLATFORM = 'platform',
@@ -17,6 +19,7 @@ export class RankingsService {
   async getSalesRanking(
     by: string,
     limit: number,
+    filters: DashboardFiltersDTO = {},
   ): Promise<GetSalesRankingDTO[]> {
     let groupByField: Prisma.Fact_game_salesScalarFieldEnum;
 
@@ -47,7 +50,7 @@ export class RankingsService {
         global_sales: true,
         other_sales: true,
       },
-      where: { [groupByField]: { not: null } },
+      where: buildSalesWhere(filters, { [groupByField]: { not: null } }),
       orderBy: { _sum: { global_sales: 'desc' } },
       take: limit,
     });
@@ -100,6 +103,7 @@ export class RankingsService {
 
   async getPublishersAnalytics(
     limit: number,
+    filters: DashboardFiltersDTO = {},
   ): Promise<GetPublishersAnalyticsDTO[]> {
     const result = await this.prisma.fact_game_sales.groupBy({
       by: 'publisher_id',
@@ -113,6 +117,7 @@ export class RankingsService {
         critic_score: true,
         user_score: true,
       },
+      where: buildSalesWhere(filters, { publisher_id: { not: null } }),
       orderBy: { _sum: { global_sales: 'desc' } },
       take: limit,
     });

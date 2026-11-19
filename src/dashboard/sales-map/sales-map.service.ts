@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { GetGenreSalesByRegionDTO } from './dto/get-genre-sales-by-region.dto.js';
+import { DashboardFiltersDTO } from '../dto/dashboard-filters.dto.js';
+import { buildSalesWhere } from '../utils/build-sales-where.js';
 
 @Injectable()
 export class SalesMapService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getGenreSalesByRegion(): Promise <GetGenreSalesByRegionDTO[]> {
+  async getGenreSalesByRegion(
+    filters: DashboardFiltersDTO = {},
+  ): Promise<GetGenreSalesByRegionDTO[]> {
     const genreSales = await this.prisma.fact_game_sales.groupBy({
       by: ['genre_id'],
       _sum: {
@@ -16,6 +20,7 @@ export class SalesMapService {
         global_sales: true,
         other_sales: true,
       },
+      where: buildSalesWhere(filters),
     });
 
     const genres = await this.prisma.dim_genres.findMany({
