@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { GetGamesDTO } from './dto/get-games.dto.js';
 import { GameFromDb } from './types/game-from-db.js';
 
@@ -47,6 +48,41 @@ export class GamesService {
     return newGame;
   }
 
+  private getOrderBy(
+    sortBy?: string,
+    order?: 'asc' | 'desc',
+  ): Prisma.fact_game_salesOrderByWithRelationInput {
+    const sortOrder: 'asc' | 'desc' = order === 'asc' ? 'asc' : 'desc';
+
+    switch (sortBy) {
+      case 'name':
+        return { name: sortOrder };
+      case 'platform':
+        return { dim_platforms: { name: sortOrder } };
+      case 'year_of_release':
+        return { year_of_release: { sort: sortOrder, nulls: 'last' } };
+      case 'genre':
+        return { dim_genres: { name: sortOrder } };
+      case 'publisher':
+        return { dim_publishers: { name: sortOrder } };
+      case 'na_sales':
+        return { na_sales: { sort: sortOrder, nulls: 'last' } };
+      case 'eu_sales':
+        return { eu_sales: { sort: sortOrder, nulls: 'last' } };
+      case 'jp_sales':
+        return { jp_sales: { sort: sortOrder, nulls: 'last' } };
+      case 'other_sales':
+        return { other_sales: { sort: sortOrder, nulls: 'last' } };
+      case 'critic_score':
+        return { critic_score: { sort: sortOrder, nulls: 'last' } };
+      case 'user_score':
+        return { user_score: { sort: sortOrder, nulls: 'last' } };
+      case 'global_sales':
+      default:
+        return { global_sales: { sort: sortOrder, nulls: 'last' } };
+    }
+  }
+
   async getAll(
     publisher?: string,
     genre?: string,
@@ -59,10 +95,13 @@ export class GamesService {
     search?: string,
     limit?: number,
     page?: number,
+    sortBy?: string,
+    order?: 'asc' | 'desc',
   ) {
     const currentPage = page && page > 0 ? page : 1;
     const pageSize = limit && limit > 0 ? limit : 10;
     const skip = (currentPage - 1) * pageSize;
+    const orderBy = this.getOrderBy(sortBy, order);
     const games = await this.prisma.fact_game_sales.findMany({
       select: GAME_SELECT,
       where: {
@@ -100,7 +139,7 @@ export class GamesService {
             }
           : {}),
       },
-      orderBy: { global_sales: { sort: 'desc', nulls: 'last' } },
+      orderBy,
       take: pageSize,
       skip: skip,
     });
@@ -159,7 +198,10 @@ export class GamesService {
     criticMin?: number,
     criticMax?: number,
     search?: string,
+    sortBy?: string,
+    order?: 'asc' | 'desc',
   ): Promise<StreamableFile> {
+    const orderBy = this.getOrderBy(sortBy, order);
     const games = await this.prisma.fact_game_sales.findMany({
       select: GAME_SELECT,
       where: {
@@ -197,7 +239,7 @@ export class GamesService {
             }
           : {}),
       },
-      orderBy: { global_sales: { sort: 'desc', nulls: 'last' } },
+      orderBy: orderBy,
     });
 
     const escapeCsv = (value: string | number | null | undefined) => {

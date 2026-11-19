@@ -29,6 +29,10 @@ export class GamesController {
     limit?: number,
     @Query('page', new ParseIntPipe({ optional: true }))
     page?: number,
+    @Query('sortBy')
+    sortBy?: string,
+    @Query('order')
+    order?: 'asc' | 'desc',
   ) {
     return this.gamesService.getAll(
       publisher,
@@ -42,6 +46,8 @@ export class GamesController {
       search,
       limit,
       page,
+      sortBy,
+      order,
     );
   }
 
@@ -65,6 +71,10 @@ export class GamesController {
     criticMax?: number,
     @Query('search')
     search?: string,
+    @Query('sortBy')
+    sortBy?: string,
+    @Query('order')
+    order?: 'asc' | 'desc',
   ) {
     return this.gamesService.exportCsv(
       publisher,
@@ -76,6 +86,8 @@ export class GamesController {
       criticMin,
       criticMax,
       search,
+      sortBy,
+      order,
     );
   }
 
