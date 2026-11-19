@@ -45,6 +45,40 @@ export class GamesController {
     );
   }
 
+  @Get('export')
+  exportCsv(
+    @Query('publisher')
+    publisher?: string,
+    @Query('genre')
+    genre?: string,
+    @Query('platform')
+    platform?: string,
+    @Query('rating')
+    rating?: string,
+    @Query('yearFrom', new ParseIntPipe({ optional: true }))
+    yearFrom?: number,
+    @Query('yearTo', new ParseIntPipe({ optional: true }))
+    yearTo?: number,
+    @Query('criticMin', new ParseIntPipe({ optional: true }))
+    criticMin?: number,
+    @Query('criticMax', new ParseIntPipe({ optional: true }))
+    criticMax?: number,
+    @Query('search')
+    search?: string,
+  ) {
+    return this.gamesService.exportCsv(
+      publisher,
+      genre,
+      platform,
+      rating,
+      yearFrom,
+      yearTo,
+      criticMin,
+      criticMax,
+      search,
+    );
+  }
+
   @Get(':id')
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.gamesService.getById(id);

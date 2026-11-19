@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { GetGamesDTO } from './dto/get-games.dto.js';
 import { GameFromDb } from './types/game-from-db.js';
@@ -147,6 +147,93 @@ export class GamesService {
       data: games.map((game) => this.formatGame(game)),
       total: total,
     };
+  }
+
+  async exportCsv(
+    publisher?: string,
+    genre?: string,
+    platform?: string,
+    rating?: string,
+    yearFrom?: number,
+    yearTo?: number,
+    criticMin?: number,
+    criticMax?: number,
+    search?: string,
+  ): Promise<StreamableFile> {
+    const games = await this.prisma.fact_game_sales.findMany({
+      select: GAME_SELECT,
+      where: {
+        ...(publisher?.trim()
+          ? { dim_publishers: { name: publisher.trim() } }
+          : {}),
+        ...(genre?.trim() ? { dim_genres: { name: genre.trim() } } : {}),
+        ...(platform?.trim()
+          ? { dim_platforms: { name: platform.trim() } }
+          : {}),
+        ...(rating?.trim() ? { dim_ratings: { name: rating.trim() } } : {}),
+        year_of_release: {
+          gte: yearFrom,
+          lte: yearTo,
+        },
+        critic_score: {
+          gte: criticMin,
+          lte: criticMax,
+        },
+        ...(search?.trim()
+          ? {
+              OR: [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                {
+                  dim_publishers: {
+                    name: { contains: search.trim(), mode: 'insensitive' },
+                  },
+                },
+                {
+                  dim_genres: {
+                    name: { contains: search.trim(), mode: 'insensitive' },
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { global_sales: { sort: 'desc', nulls: 'last' } },
+    });
+
+    const escapeCsv = (value: string | number | null | undefined) => {
+      const text = value === null || value === undefined ? '' : String(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const header =
+      'ID,Nome,Plataforma,Ano,Genero,Publicadora,Classificacao,Vendas NA,Vendas EU,Vendas JP,Outras Vendas,Vendas Globais,Nota Critica,Nota Usuario';
+
+    const rows = games.map((raw) => {
+      const game = this.formatGame(raw);
+      return [
+        game.id,
+        escapeCsv(game.name),
+        escapeCsv(game.platform_name),
+        game.year_of_release ?? '',
+        escapeCsv(game.genre_name),
+        escapeCsv(game.publisher_name),
+        escapeCsv(game.rating),
+        game.na_sales,
+        game.eu_sales,
+        game.jp_sales,
+        game.other_sales,
+        game.global_sales,
+        game.critic_score ?? '',
+        game.user_score ?? '',
+      ].join(',');
+    });
+
+    const csvContent = [header, ...rows].join('\n');
+
+    return new StreamableFile(Buffer.from('\uFEFF' + csvContent, 'utf-8'), {
+      type: 'text/csv; charset=utf-8',
+      disposition: 'attachment; filename="jogos-export.csv"',
+    });
   }
 
   async getById(id: number): Promise<GetGamesDTO> {
