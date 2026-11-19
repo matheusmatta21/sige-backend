@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { RankingsService, RankingGroupBy } from './rankings.service.js';
 
-@Controller('rankings')
+@Controller('')
 export class RankingsController {
   constructor(private readonly rankingsService: RankingsService) {}
 
